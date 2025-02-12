@@ -16,7 +16,7 @@ export default async function Home() {
   let userdata = {};
   let range = "0-100";
   const url =
-    process.env.EXTERNAL_API_URL +
+    process.env.REST_API_URL +
     "/api/product?" +
     new URLSearchParams({ range: range });
   const response = await fetch(url, {

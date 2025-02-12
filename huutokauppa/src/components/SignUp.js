@@ -114,10 +114,9 @@ export default function SignUp(props) {
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
     try {
-      const response = await fetch("/api/forwarder", {
+      const response = await fetch( process.env.REST_API_URL + "/api/auth/register", {
         method: "POST",
         headers: {
-          "X-Forward-Url": "/api/auth/register",
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
