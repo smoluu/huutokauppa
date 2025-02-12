@@ -1,0 +1,44 @@
+#mongodb
+/data
+
+#garage
+/garage/data
+/garage/meta
+
+# node dependencies
+/huutokauppa/node_modules
+/huutokauppa//.pnp
+/huutokauppa/.pnp.*
+/huutokauppa/.yarn/*
+/huutokauppa/!.yarn/patches
+/huutokauppa/!.yarn/plugins
+/huutokauppa/!.yarn/releases
+/huutokauppa/!.yarn/versions
+
+/backend/node_modules
+
+# testing
+/coverage
+
+# next.js
+/huutokauppa/.next/
+/huutokauppa/out/
+
+# production
+/huutokauppa/build
+
+# misc
+/huutokauppa/.DS_Store
+/huutokauppa/*.pem
+
+# debug
+/huutokauppa/npm-debug.log*
+/huutokauppa/yarn-debug.log*
+/huutokauppa/yarn-error.log*
+
+# vercel
+/huutokauppa/.vercel
+
+# typescript
+/huutokauppa/*.tsbuildinfo
+/huutokauppa/next-env.d.ts
