@@ -1,12 +1,20 @@
 const express = require("express");
 const Product = require("../models/Product");
 const verifyToken = require("../verifyToken");
-const { default: mongoose } = require("mongoose");
+const { mongoose } = require("mongoose");
 const multer = require("multer");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { fromEnv } = require("@aws-sdk/credential-providers"); // ES6 import
+const  { Stream } = require('node:stream');
 
 const upload = multer();
 const router = express.Router();
 console.log("API LISTENING ON /api/product");
+// S3 connection
+const s3_client = new S3Client({
+  region: process.env.AWS_DEFAULT_REGION,
+  credentials: fromEnv(),
+});
 
 // GET /product route to get product data
 router.get("/", async (req, res) => {
@@ -36,34 +44,50 @@ router.get("/", async (req, res) => {
   }
 });
 // PUT api/product/  create or modify a product
-router.post("/create", upload.array("images", 10), async (req, res) => {
-  console.log("REQUEST: ", req.files);
-  // try {
-  //   const userId = req.user.userId;
-  //   const name = req.user.name;
-  //   const productId = req.productId;
-  //   const duration = new Date(req.body.product.end);
+// images are stored in  req.files
+router.post(
+  "/create",
+  [upload.array("images", 10), verifyToken],
+  async (req, res) => {
+    try {
+      console.log(req.user);
+      const userId = req.user.userId;
+      const name = req.body.name;
+      const desc = req.body.desc;
+      const duration = new Date(req.body.end);
+      const images = req.files;
 
-  //   // if no product id we create a product
-  //   if (productId) {
-  //     const product = new Product({
-  //       name: req.body.product.name,
-  //       desc: req.body.product.desc,
-  //       ownerId: userId,
-  //       created: Date.now(),
-  //       end: duration,
-  //     });
-  //     await product.save();
-  //     console.log(`Created a product: name:${name} Id:${product._id}`);
-  //     return res.json({});
-  //   }
+      //  if no product id we create a product
+      const product = new Product({
+        name: name,
+        desc: desc,
+        ownerId: userId,
+        created: Date.now(),
+        end: duration,
+      });
+      await product.save();
 
-  // modify existing product
-  return res.status(200).json({"message": "nicee"} );
-  // } catch (error) {
-  //   res.json(500, error);
-  //   console.log(error);
-  // }
-});
+      // send images to object storage images/productId/(image index)
+      for (const [index, image] of images.entries()) {
+        const bucket = process.env.PRODUCT_BUCKET
+        const command = new PutObjectCommand({
+          Bucket: bucket,
+          Key: `huutokauppa-bucket/product/images/${product._id}/${index}`,
+          Body: image.buffer,
+        });
+        const response = await s3_client.send(command);
+        console.log(response)
+
+        console.log("SENDING TO BUCKET", index);
+      }
+
+      console.log(`Created a product: name:${name} Id:${product._id}`);
+      return res.json({});
+    } catch (error) {
+      res.status(500).json(error);
+      console.log(error);
+    }
+  }
+);
 
 module.exports = router;

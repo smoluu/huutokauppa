@@ -27,7 +27,7 @@ import { FormatAlignCenter } from "@mui/icons-material";
 import { format } from "date-fns";
 
 export default function AddItemPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [endDate, setendDate] = useState(new Date());
@@ -59,6 +59,7 @@ export default function AddItemPage() {
 
     //create formdata
     const formData = new FormData();
+    formData.append("userId", user)
     formData.append("name", name)
     formData.append("desc", description)
     formData.append("end", endDate)
