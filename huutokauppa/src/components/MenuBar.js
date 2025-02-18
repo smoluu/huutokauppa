@@ -35,11 +35,11 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
 export default function Menubar({  }) {
   const [open, setOpen] = React.useState(false);
   const { isLoggedIn, token, setLoggedIn, user } = useAuth();
+  const router = useRouter();
 
   const toggleDrawer = (newOpen) => () => {
     setOpen(newOpen);
   };
-  console.log(user)
   let signInText = user ? user : "Kirjaudu";
   let sellLink = "/SignIn";
   let signInLink = "/SignIn";
@@ -70,6 +70,7 @@ export default function Menubar({  }) {
               variant="Title"
               color="info"
               sx={{ "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.08)" } }}
+              onClick={() => { router.push("/")}}
             >
               Huutokauppa
             </Button>

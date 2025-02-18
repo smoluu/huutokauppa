@@ -75,7 +75,6 @@ export default function SignIn(props) {
     setOpen(true);
   };
 
-  console.log(useTheme()); // Should log your theme object
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -145,7 +144,6 @@ export default function SignIn(props) {
   }, [isLoggedIn])
 
   return (
-    <ThemeProvider>
       <SignInContainer direction="column" justifyContent="space-between">
         <Card variant="outlined">
           <Typography
@@ -233,6 +231,5 @@ export default function SignIn(props) {
           </Box>
         </Card>
       </SignInContainer>
-    </ThemeProvider>
   );
 }

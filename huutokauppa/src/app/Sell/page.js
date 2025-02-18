@@ -18,8 +18,8 @@ import Alert from "@mui/material/Alert";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { renderTimeViewClock } from "@mui/x-date-pickers/timeViewRenderers";
 import { useDropzone } from "react-dropzone";
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import 'dayjs/locale/de';
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import "dayjs/locale/de";
 import { useAuth } from "@/context/AuthContext";
 import useAlert from "@/hooks/useAlert";
 import { useRouter } from "next/navigation";
@@ -59,15 +59,15 @@ export default function AddItemPage() {
 
     //create formdata
     const formData = new FormData();
-    formData.append("userId", user)
-    formData.append("name", name)
-    formData.append("desc", description)
-    formData.append("end", endDate)
+    formData.append("userId", user);
+    formData.append("name", name);
+    formData.append("desc", description);
+    formData.append("end", endDate);
 
     selectedImages.forEach((image, index) => {
       formData.append(`images`, image, "img_" + index);
     });
-    
+
     const product = {
       product: {
         name: name,
@@ -75,7 +75,7 @@ export default function AddItemPage() {
         end: endDate,
       },
     };
-    
+
     try {
       const response = await fetch("http://localhost:5000/api/product/create", {
         method: "POST",
@@ -84,13 +84,13 @@ export default function AddItemPage() {
         },
         body: formData,
       });
-      console.log(formData)
+      console.log(formData);
 
       if (!response.ok) {
         throw new Error("Failed to add item");
       }
       setAlert("Tuote lisätty myyntiin", "success");
-      //router.push("/");
+      router.push("/");
     } catch (error) {
       console.error(error);
     }
@@ -98,11 +98,11 @@ export default function AddItemPage() {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="de">
-      <Box sx={{ maxWidth: "1200px", mx: "auto", p: 4 }}>
+      <Box sx={{ maxWidth: "1200px" }}>
         <Dialog open={true}>
           <DialogTitle>Myy uusi tuote</DialogTitle>
           <DialogContent>
-            <Stack spacing={2}>
+            <Stack spacing={3}>
               <TextField
                 label="Nimi"
                 fullWidth
@@ -119,11 +119,29 @@ export default function AddItemPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
+              <TextField
+                label="Osta heti hinta"
+                fullWidth
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                sx={{ display: "inline-flex", width: "30%" }}
+              />
+              <TextField
+                label="Alin hinta"
+                fullWidth
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                sx={{ display: "inline-block", width: "30%" }}
+              />
+
               <DateTimePicker
-                label="Controlled picker"
-                onChange={(newValue) => {setendDate(new Date(newValue))
-                  console.log(newValue)}
-                }
+                label="Päättymis päivämäärä"
+                onChange={(newValue) => {
+                  setendDate(new Date(newValue));
+                  console.log(newValue);
+                }}
               />
 
               <Box sx={{ width: "100%" }}>

@@ -2,7 +2,6 @@
 :root {
   --background: #000000;
   --foreground: #ededed;
-  
 }
 
 @media (prefers-color-scheme: dark) {
@@ -16,4 +15,5 @@ body,html {
   background: radial-gradient(at 50% 50%, hsla(210, 100%, 60%, 0.5), hsl(220, 30%, 5%));
   margin: 0;
   min-height: 100vh;
+
 }

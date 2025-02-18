@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "jsx": "react",
     "baseUrl": ".", // Points to the root of your project
     "paths": {
       "@/*": ["src/*"] // Resolves @/ to src/

@@ -1,13 +1,13 @@
 import MenuBar from "@/components/MenuBar";
 import { Grid2, Box } from "@mui/material";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
-import CardActionArea from "@mui/material/CardActionArea";
-import CardActions from "@mui/material/CardActions";
+
 import Page from "./page.client";
+import { Key } from "@mui/icons-material";
+import placeholderImage from "public/150x150.svg";
+import { redirect } from "next/dist/server/api-utils";
+const stream = require("node:stream");
+import ProductCard from "@/components/ProductCard";
+import { msToDHMS } from "@/helperFunctions/Time";
 
 export default async function Home() {
   // Get cookies from the headers
@@ -23,6 +23,7 @@ export default async function Home() {
     method: "GET",
   });
   const products = await response.json();
+  console.log(products);
 
   return (
     <div
@@ -49,46 +50,25 @@ export default async function Home() {
         }}
       >
         {products.map(function (product, index) {
-          // calculate remaining time
           var durationMS = new Date(product.end).getTime() - Date.now();
+          var timeFormatted = ""
+          if (durationMS > 0) {
+            const TimeDHMS = msToDHMS(durationMS);
+            const days = TimeDHMS.days > 0 ? `${TimeDHMS.days}:` : "";
+            const hours = TimeDHMS.hours > 0 ? `${TimeDHMS.hours}:` : "";
+            const minutes = TimeDHMS.minutes > 0 ? `${TimeDHMS.minutes}:` : "";
+            timeFormatted = `${days}${hours}${minutes}${TimeDHMS.seconds}`
+          }else {
+            timeFormatted = "Loppunut"
+          }
+          // calculate remaining time
           return (
-            <Grid2 key={index} item="true" xs={12} sm={6} md={4}>
-              <Card sx={{ width: 250, height: 300, justifyItems: ""}}>
-                <CardActionArea>
-                  <CardMedia
-                    component="img"
-                    height="140"
-                    image="https://placehold.co/150x150"
-                    alt="Product image"
-                  />
-                  <CardContent  >
-                    <Typography gutterBottom variant="h5" component="div" >
-                      {product.name}
-                    </Typography >
-                    <Typography 
-                      variant="body2"
-                      
-                      sx={{ color: "text.secondary", flexGrow: 1}}
-                    >
-                       {product.desc}
-                    </Typography>
-                  </CardContent>
-                </CardActionArea>
-                <CardActions >
-                  <Button variant="" size="small" color="primary" >
-                    Huuda
-                  </Button>
-                  <Button
-                    variant=""
-                    color="primary"
-                    className="endTimeButton"
-                    sx={{ display: "none", width: 100, justifyContent: "left" }}
-                  >
-                    {durationMS}
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid2>
+            <ProductCard
+              key={index}
+              product={product}
+              durationMS={durationMS}
+              timeFormatted={timeFormatted}
+            ></ProductCard>
           );
         })}
       </Grid2>

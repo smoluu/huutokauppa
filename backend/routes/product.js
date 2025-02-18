@@ -3,9 +3,15 @@ const Product = require("../models/Product");
 const verifyToken = require("../verifyToken");
 const { mongoose } = require("mongoose");
 const multer = require("multer");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} = require("@aws-sdk/client-s3");
 const { fromEnv } = require("@aws-sdk/credential-providers"); // ES6 import
-const  { Stream } = require('node:stream');
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { Stream } = require("node:stream");
+const { resolve } = require("node:path");
 
 const upload = multer();
 const router = express.Router();
@@ -16,18 +22,46 @@ const s3_client = new S3Client({
   credentials: fromEnv(),
 });
 
+async function createPresignedUrl(bucketName, key) {
+  // Create a GetObjectCommand to access the S3 object
+  const command = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+  });
+  // Generate the presigned URL with an expiration time (in seconds)
+  const url = await getSignedUrl(s3_client, command, { expiresIn: 3600 }); // Expires in 1 hour
+
+  return url;
+}
 // GET /product route to get product data
+//  Sends one product data if product id is provided as url query parameter
+// Send multiple if range parameter is provided
 router.get("/", async (req, res) => {
   try {
-    //  Send one product data if product id is provided as url query parameter
-    if (req.query.id) {
+    if (req.query.productId) {
       try {
-        var product = await Product.findById(productId); // Find user by their ID
+        const result = await Product.findById(req.query.productId).lean(); // Find user by their ID
+        var response = result;
+        const product = response;
+        //create presigned urls for images and add to response
+        if (product.imageUrls) {
+          for (let i = 0; i > product.imageUrls.length; i++) {
+            // get product image and add them to the response
+            const bucketName = process.env.PRODUCT_BUCKET;
+            const key = `${bucketName}/product/images/${product._id}/${i}`;
+            const presignedUrl = await createPresignedUrl(bucketName, key, {
+              expiresIn: 99999999999,
+            });
+            product.imageUrls.push(presignedUrl);
+          }
+        }
+        console.log(product);
+        res.json({ product: product });
       } catch (error) {
         console.log(error);
         return res.status(404).json({ message: "Invalid Product Id" });
       }
-      res.json({ product });
+      return;
     }
 
     // Send range of products
@@ -35,9 +69,21 @@ router.get("/", async (req, res) => {
     const rangeMin = range[0];
     const rangeMax = range[1];
     const currentDate = Date.now();
-    const result = await Product.find().sort({ end: 1 }).limit(100);
+    const result = await Product.find().sort({ end: 1 }).limit(100).lean();
 
-    res.status(200).json(result);
+    var response = result;
+    // attach presigned urls of thumbnail to response
+    for (const [i, product] of response.entries()) {
+      // get product image and add them to the response
+      const bucketName = process.env.PRODUCT_BUCKET;
+      const key = `${bucketName}/product/images/${product._id}/0`;
+      const presignedUrl = await createPresignedUrl(bucketName, key, {
+        expiresIn: 99999999999,
+      });
+      response[i].imageUrl = presignedUrl;
+    }
+
+    res.status(200).json(response);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -69,17 +115,23 @@ router.post(
 
       // send images to object storage images/productId/(image index)
       for (const [index, image] of images.entries()) {
-        const bucket = process.env.PRODUCT_BUCKET
+        const bucket = process.env.PRODUCT_BUCKET;
         const command = new PutObjectCommand({
           Bucket: bucket,
           Key: `huutokauppa-bucket/product/images/${product._id}/${index}`,
           Body: image.buffer,
         });
         const response = await s3_client.send(command);
-        console.log(response)
-
+        console.log(response);
+        // create presigned urls for each image and add urls to product in database
+        const key = `huutokauppa-bucket/product/images/${product._id}/${index}`;
+        const presignedUrl = await createPresignedUrl(bucket, key, {
+          expiresIn: 99999999999,
+        });
+        product.imageUrls.push(presignedUrl);
         console.log("SENDING TO BUCKET", index);
       }
+      await product.save();
 
       console.log(`Created a product: name:${name} Id:${product._id}`);
       return res.json({});

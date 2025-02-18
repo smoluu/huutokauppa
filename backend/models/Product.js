@@ -11,6 +11,7 @@ const productSchema = new mongoose.Schema({
     created: {type: Date, default: Date.now},
     updated: {type: Date},
     end: {type: Date, required: true},
+    imageUrls: {type: [""]}
 });
 
 

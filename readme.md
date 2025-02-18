@@ -13,7 +13,7 @@ garage bucket create <bucket_name>
 # get info on bucket
 garage bucket info <bucket_name>
 
-# creating API KEY (copy private key to env)
+# creating API KEY (copy key Id and private key to env file)
 garage key create <key_name>
 
 # key info

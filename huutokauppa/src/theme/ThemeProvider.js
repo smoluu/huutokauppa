@@ -1,4 +1,4 @@
-"use client"; // Required for MUI in Next.js 13+
+"use client";
 
 import React from "react";
 import {
