@@ -2,10 +2,6 @@ import MenuBar from "@/components/MenuBar";
 import { Grid2, Box } from "@mui/material";
 
 import Page from "./page.client";
-import { Key } from "@mui/icons-material";
-import placeholderImage from "public/150x150.svg";
-import { redirect } from "next/dist/server/api-utils";
-const stream = require("node:stream");
 import ProductCard from "@/components/ProductCard";
 import { msToDHMS } from "@/helperFunctions/Time";
 
@@ -16,7 +12,7 @@ export default async function Home() {
   let userdata = {};
   let range = "0-100";
   const url =
-    process.env.REST_API_URL +
+    process.env.NEXT_PUBLIC_API_ENDPOINT +
     "/api/product?" +
     new URLSearchParams({ range: range });
   const response = await fetch(url, {

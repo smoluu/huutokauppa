@@ -6,7 +6,7 @@ const productSchema = new mongoose.Schema({
     desc: {type:String, default: ""},
     open: {type: Boolean, default: true},
     price: {type: Number,default: 0},
-    bid: {type: Number},
+    bid: {type: Number, default: 0},
     minBidIncr: {type: Number, default: 1},
     created: {type: Date, default: Date.now},
     updated: {type: Date},

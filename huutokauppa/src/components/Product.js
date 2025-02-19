@@ -13,18 +13,41 @@ import {
   Paper,
   CardMedia,
   Box,
-  TextField
+  TextField,
+  Grid2,
+  Grid,
 } from "@mui/material";
 // components/Carousel.js
-import React from 'react';
-import Slider from 'react-slick';
+import React, { useState } from "react";
 import { useEffect } from "react";
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import sendBid from "@/app/action/sendBid";
+import useAlert from "@/hooks/useAlert";
 
 export default function Product(props) {
   const product = props.product;
-  console.log(product);
+  const [newBid, setNewBid] = useState(product.bid);
+  const [currentBid, setCurrentBid] = useState(product.bid);
+  const { isLoggedIn, token, user } = useAuth();
+  const { setAlert } = useAlert();
+  const router = useRouter();
+
+  const handleBid = async () => {
+    if (isLoggedIn) {
+      const response = await sendBid(newBid, user, product._id, token);
+      const result = await response.json();
+      console.log(result.message);
+      if (response.status == 200) {
+        setAlert(`Huudettu ${newBid}€`, "success");
+      } else {
+        // error status
+        setAlert(`Huuto epäonnistui: ${result.message}`, "error");
+      }
+    } else {
+      router.push("/SignIn");
+    }
+  };
 
   const bidHistory = [
     { bidder: "John Doe", bidAmount: "$2,400.00", time: "2025-02-17 14:30" },
@@ -44,10 +67,8 @@ export default function Product(props) {
         paddingTop: "150px",
       }}
     >
-      
       <Card
         sx={{
-          height: "70vh",
           width: "80vw",
           boxShadow: 5,
           borderRadius: "16px",
@@ -57,87 +78,72 @@ export default function Product(props) {
           "&:hover": {
             transform: "scale(1.05)",
           },
-
         }}
       >
-          <CardMedia
-            component="img"
-            image={product.imageUrls[0]}
-            
-            alt="Product image"
-            sx={{ width: "50%", margin: "auto" }}
-            
-          />
-
-          <Typography
-            variant="h4"
-            sx={{
-              
-              fontSize: "2rem",
-              fontWeight: "bold",
-              textAlign: "center",
-            }}
-          >
-            {product.name}
-          </Typography>
-
-          <Typography
-            variant="body1"
-            sx={{
-              fontSize: "1.2rem",
-              color: "text.secondary",
-            }}
-          >
-            {product.desc}
-          </Typography>
-          <Typography variant="body2" sx={{ marginBottom: 1 }}>
-            Brand: Timeless Classics
-          </Typography>
-          <Typography variant="body2" sx={{ marginBottom: 1 }}>
-            Condition: Excellent
-          </Typography>
-          <Typography variant="body2" sx={{ marginBottom: 1 }}>
-            Shipping: Free Worldwide Shipping
-          </Typography>
-
-          <Box
-            sx={{
-              
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-            >
+        <CardMedia
+          component="img"
+          image={product.imageUrls[0]}
+          alt="Product image"
+          sx={{ width: "50%", margin: "auto" }}
+        />
+        <Grid2 container>
+          <Grid2 size={12} padding={5}>
             <Typography
-              variant="h6"
+              variant="h4"
               sx={{
-                margin: 2,
-                fontSize: "1.5rem",
+                fontSize: "2rem",
                 fontWeight: "bold",
-                color: "primary.main",
-              }}
-              >
-              {product.price}€
-            </Typography>
-            <TextField
-                label="Korotus"
-                value={""}
-                onChange={(e) => {}}
-              />
-            <Button
-              variant="contained"
-              sx={{
-                margin: 2,
-                backgroundColor: "primary.main",
-                color: "common.white",
-                "&:hover": {
-                  backgroundColor: "primary.dark",
-                },
+                textAlign: "center",
               }}
             >
-              Place Bid
+              {product.name}
+            </Typography>
+            <Grid2 size={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={10}
+                disabled
+                id="outlined-disabled"
+                label="Lisätiedot"
+                defaultValue={product.desc}
+              />
+            </Grid2>
+          </Grid2>
+        </Grid2>
+
+        <Grid2
+          container
+          sx={{
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          padding={5}
+        >
+          <Grid2 size={6}>
+            <Button variant="outlined">{product.price}€</Button>
+            <Button variant="contained" sx={{ marginX: 2 }}>
+              Osta nyt
             </Button>
-          </Box>
+          </Grid2>
+          <Grid2 size={6}>
+            <Button variant="outlined">{currentBid}€</Button>
+            <TextField
+              label="Uusi huuto"
+              value={newBid}
+              type="number"
+              onChange={(e) => {
+                setNewBid(e.target.value);
+              }}
+              sx={{ maxWidth: 150, marginX: 2 }}
+              size="small"
+            />
+            <Button variant="contained" onClick={handleBid}>
+              Huuda
+            </Button>
+          </Grid2>
+        </Grid2>
+        {/* CONTAINER END */}
       </Card>
 
       {/* Bid History Table */}

@@ -11,7 +11,7 @@ const AlertPopup = () => {
     return (
       <Snackbar open={open} autoHideDuration={6000}>
         <Alert
-          severity="success"
+          severity={type}
           variant="filled"
           sx={{ width: "100%" }}
         >

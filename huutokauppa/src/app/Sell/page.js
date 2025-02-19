@@ -14,7 +14,6 @@ import {
   ImageListItem,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
-import Alert from "@mui/material/Alert";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { renderTimeViewClock } from "@mui/x-date-pickers/timeViewRenderers";
 import { useDropzone } from "react-dropzone";
@@ -23,17 +22,17 @@ import "dayjs/locale/de";
 import { useAuth } from "@/context/AuthContext";
 import useAlert from "@/hooks/useAlert";
 import { useRouter } from "next/navigation";
-import { FormatAlignCenter } from "@mui/icons-material";
-import { format } from "date-fns";
 
 export default function AddItemPage() {
   const { token, user } = useAuth();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [price, setprice] = useState("");
   const [endDate, setendDate] = useState(new Date());
   const [selectedImages, setSelectedImages] = useState([]);
   const { setAlert } = useAlert();
   const router = useRouter();
+  const defaultExpiryDate = new Date().setDate(new Date().getDate() + 1)
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: "image/*",
@@ -62,6 +61,7 @@ export default function AddItemPage() {
     formData.append("userId", user);
     formData.append("name", name);
     formData.append("desc", description);
+    formData.append("price", price)
     formData.append("end", endDate);
 
     selectedImages.forEach((image, index) => {
@@ -77,7 +77,7 @@ export default function AddItemPage() {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/product/create", {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_ENDPOINT + "/api/product/create", {
         method: "POST",
         headers: {
           Authorization: "Bearer " + token,
@@ -123,21 +123,15 @@ export default function AddItemPage() {
                 label="Osta heti hinta"
                 fullWidth
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                sx={{ display: "inline-flex", width: "30%" }}
+                value={price}
+                onChange={(e) => setprice(e.target.value)}
+                sx={{ width: "30%" }}
               />
-              <TextField
-                label="Alin hinta"
-                fullWidth
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                sx={{ display: "inline-block", width: "30%" }}
-              />
+
 
               <DateTimePicker
                 label="Päättymis päivämäärä"
+                dateValue={defaultExpiryDate}
                 onChange={(newValue) => {
                   setendDate(new Date(newValue));
                   console.log(newValue);

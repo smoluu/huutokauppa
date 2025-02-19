@@ -10,8 +10,6 @@ const {
 } = require("@aws-sdk/client-s3");
 const { fromEnv } = require("@aws-sdk/credential-providers"); // ES6 import
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-const { Stream } = require("node:stream");
-const { resolve } = require("node:path");
 
 const upload = multer();
 const router = express.Router();
@@ -100,6 +98,7 @@ router.post(
       const userId = req.user.userId;
       const name = req.body.name;
       const desc = req.body.desc;
+      const price = req.body.price;
       const duration = new Date(req.body.end);
       const images = req.files;
 
@@ -107,6 +106,7 @@ router.post(
       const product = new Product({
         name: name,
         desc: desc,
+        price: price,
         ownerId: userId,
         created: Date.now(),
         end: duration,

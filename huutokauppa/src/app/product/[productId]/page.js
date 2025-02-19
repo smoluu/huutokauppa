@@ -7,7 +7,7 @@ export default async function Page({ params }) {
   const productId = (await params).productId;
 
   const response = fetch(
-    process.env.EXTERNAL_API_URL +
+    process.env.NEXT_PUBLIC_API_ENDPOINT +
       "/api/product?" +
       new URLSearchParams({ productId: productId }),
     {

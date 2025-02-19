@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 const prodcutRoutes = require("./routes/product");
+const bidRoutes = require("./routes/bid")
 const {
   S3Client,
   ListBucketsCommand,
@@ -44,6 +45,10 @@ app.use("/api/user", userRoutes);
 
 //product route
 app.use("/api/product", prodcutRoutes);
+
+// bid routes
+app.use("/api/bid", bidRoutes);
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
