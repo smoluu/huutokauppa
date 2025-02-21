@@ -3,6 +3,7 @@ const Product = require("../models/Product");
 const verifyToken = require("../verifyToken");
 const { mongoose } = require("mongoose");
 const multer = require("multer");
+const http = require("http");
 const {
   S3Client,
   PutObjectCommand,
@@ -10,9 +11,13 @@ const {
 } = require("@aws-sdk/client-s3");
 const { fromEnv } = require("@aws-sdk/credential-providers"); // ES6 import
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-
+const priceEmitter = require("../emitters/priceEmitter");
+const { json } = require("stream/consumers");
 const upload = multer();
 const router = express.Router();
+
+const sse_clients = new Map();
+
 console.log("API LISTENING ON /api/product");
 // S3 connection
 const s3_client = new S3Client({
@@ -48,7 +53,7 @@ router.get("/", async (req, res) => {
             const bucketName = process.env.PRODUCT_BUCKET;
             const key = `${bucketName}/product/images/${product._id}/${i}`;
             const presignedUrl = await createPresignedUrl(bucketName, key, {
-              expiresIn: 99999999999,
+              expiresIn: 360000,
             });
             product.imageUrls.push(presignedUrl);
           }
@@ -141,5 +146,39 @@ router.post(
     }
   }
 );
+router.get("/price", (req, res) => {
+  // Set SSE headers
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  const productId = req.query.productId || "noid";
+  console.log("new sse connection", req.query);
+
+  sse_clients.set(res, productId);
+  const data = JSON.stringify({
+    message: "Listening server-sent events...",
+  });
+  res.write(`data: ${data} \n\n`);
+
+  req.on("close", () => {
+    console.log("sse closed");
+    sse_clients.delete(res);
+    res.end();
+  });
+});
+// listen for price change
+// sse must start with "data:" and end in "\n\n"
+priceEmitter.on("product_new_price", (new_productId, price) => {
+  const data = JSON.stringify({
+    productId: new_productId,
+    price: price,
+  });
+  sse_clients.forEach((client_productId, res) => {
+    if (client_productId == new_productId) {
+      console.log(client_productId, new_productId);
+      res.write(`data: ${data} \n\n`);
+    }
+  });
+});
 
 module.exports = router;

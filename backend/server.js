@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
-const prodcutRoutes = require("./routes/product");
+const productRoutes = require("./routes/product");
 const bidRoutes = require("./routes/bid")
 const {
   S3Client,
@@ -17,7 +17,6 @@ const cors = require("cors");
 const app = express();
 app.use(cors({ origin: ["http://localhost:3000"] }));
 app.use(express.json({ limit: "1mb" }));
-
 // create bucket for garagehq
 (async () => {
   const s3_client = new S3Client({
@@ -44,7 +43,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 
 //product route
-app.use("/api/product", prodcutRoutes);
+app.use("/api/product", productRoutes);
 
 // bid routes
 app.use("/api/bid", bidRoutes);

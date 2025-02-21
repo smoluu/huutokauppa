@@ -4,6 +4,7 @@ const Product = require("../models/Product");
 const verifyToken = require("../verifyToken");
 const { default: mongoose } = require("mongoose");
 const router = express.Router();
+const priceEmitter = require('../emitters/priceEmitter');
 
 router.put("/", verifyToken, async (req, res) => {
   try {
@@ -23,13 +24,14 @@ router.put("/", verifyToken, async (req, res) => {
         bid: newBid,
       });
       bid.save();
-      const asd = await Product.updateOne({_id: productId}, {bid: newBid})
-      console.log(asd)
+      await Product.updateOne({_id: productId}, {bid: newBid})
+      const emit = priceEmitter.emit('product_new_price',productId, newBid)
+      console.log(`NEW BID: "${productId}" at ${newBid}€ from "${name}" ${emit} `)
+      return res.status(200).json({ message: "Huuto onnistui" });
     } else {
-      return res.status(400).json({ message: "Bid too low" });
+      return res.status(400).json({ message: "Liian pieni huuto" });
 
     }
-    res.status(200).json({ message: "Bid succesfull" });
   } catch (error) {
     console.log(error);
     return res.status(500);
