@@ -13,8 +13,10 @@ const { fromEnv } = require("@aws-sdk/credential-providers"); // ES6 import
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const priceEmitter = require("../emitters/priceEmitter");
 const { json } = require("stream/consumers");
+const { url } = require("inspector");
 const upload = multer();
 const router = express.Router();
+const { getEpochMsFromXAmzDate } = require("../helpers/dateConversion");
 
 const sse_clients = new Map();
 
@@ -46,19 +48,38 @@ router.get("/", async (req, res) => {
         const result = await Product.findById(req.query.productId).lean(); // Find user by their ID
         var response = result;
         const product = response;
-        //create presigned urls for images and add to response
-        if (product.imageUrls) {
-          for (let i = 0; i > product.imageUrls.length; i++) {
-            // get product image and add them to the response
-            const bucketName = process.env.PRODUCT_BUCKET;
-            const key = `${bucketName}/product/images/${product._id}/${i}`;
-            const presignedUrl = await createPresignedUrl(bucketName, key, {
-              expiresIn: 360000,
+        const imageUrls = product.imageUrls;
+        var hasUrlsChanged = false;
+        //create new presigned urls for images and add to response
+        if (imageUrls) {
+          for (let i = 0; i < imageUrls.length; i++) {
+            //check expiry and generate new signedurl if expired
+            const urlParams = new URLSearchParams(imageUrls[i]);
+            const xAmzDate = urlParams.get("X-Amz-Date"); // creation date (ISO 8601 "basic")
+            const xAmzExpires = urlParams.get("X-Amz-Expires"); // seconds from creation to expiry
+            const expiry = getEpochMsFromXAmzDate(xAmzDate) + (xAmzExpires * 1000);
+            if (new Date().getTime() > expiry) {
+              // get product image and add them to the response
+              const bucketName = process.env.PRODUCT_BUCKET;
+              const key = `${bucketName}/product/images/${product._id}/${i}`;
+              const newPresignedUrl = await createPresignedUrl(
+                bucketName,
+                key,
+                {
+                  expiresIn: 3600,
+                }
+              );
+              product.imageUrls[i] = newPresignedUrl;
+              hasUrlsChanged = true;
+            }
+          }
+          // store new urls in mongodb product document
+          if (hasUrlsChanged == true) {
+            await Product.findByIdAndUpdate(req.query.productId, {
+              imageUrls: product.imageUrls,
             });
-            product.imageUrls.push(presignedUrl);
           }
         }
-        console.log(product);
         res.json({ product: product });
       } catch (error) {
         console.log(error);
@@ -81,7 +102,7 @@ router.get("/", async (req, res) => {
       const bucketName = process.env.PRODUCT_BUCKET;
       const key = `${bucketName}/product/images/${product._id}/0`;
       const presignedUrl = await createPresignedUrl(bucketName, key, {
-        expiresIn: 99999999999,
+        expiresIn: 3600,
       });
       response[i].imageUrl = presignedUrl;
     }
@@ -131,7 +152,7 @@ router.post(
         // create presigned urls for each image and add urls to product in database
         const key = `huutokauppa-bucket/product/images/${product._id}/${index}`;
         const presignedUrl = await createPresignedUrl(bucket, key, {
-          expiresIn: 99999999999,
+          expiresIn: 3600,
         });
         product.imageUrls.push(presignedUrl);
         console.log("SENDING TO BUCKET", index);
