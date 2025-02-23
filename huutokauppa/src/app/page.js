@@ -29,8 +29,6 @@ export default async function Home() {
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-middle",
-        background:
-          "radial-gradient(at 50% 50%, hsla(210, 100%, 60%, 0.5), hsl(220, 30%, 5%))",
       }}
     >
       <Page></Page>
@@ -55,7 +53,7 @@ export default async function Home() {
             const minutes = TimeDHMS.minutes > 0 ? `${TimeDHMS.minutes}:` : "";
             timeFormatted = `${days}${hours}${minutes}${TimeDHMS.seconds}`
           }else {
-            timeFormatted = "Loppunut"
+            timeFormatted = "Päättynyt"
           }
           // calculate remaining time
           return (

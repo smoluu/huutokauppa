@@ -49,13 +49,6 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
     position: "absolute",
     zIndex: -1,
     inset: 0,
-    backgroundImage:
-      "radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))",
-    backgroundRepeat: "no-repeat",
-    ...theme.applyStyles("dark", {
-      backgroundImage:
-        "radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))",
-    }),
   },
 }));
 
@@ -114,13 +107,16 @@ export default function SignUp(props) {
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
     try {
-      const response = await fetch( process.env.REST_API_URL + "/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_ENDPOINT + "/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
       const result = await response.json(); // Parse JSON response
       if (!response.ok) {
         alert("ERROR: " + result.message);
@@ -138,11 +134,11 @@ export default function SignUp(props) {
     }
   };
 
-    React.useEffect(() => {
-      if (isLoggedIn) {
-        router.push("/");
-      }
-    }, [isLoggedIn]);
+  React.useEffect(() => {
+    if (isLoggedIn) {
+      router.push("/");
+    }
+  }, [isLoggedIn]);
 
   return (
     <ThemeProvider>

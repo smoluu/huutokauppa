@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
     if (storedToken) {
       setToken(storedToken);
       setIsLoggedIn(true);
-      verifyToken()
+      verifyToken();
     }
   }, []);
 
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
     // Set token in cookies and update state
     setToken(newToken);
     setIsLoggedIn(true);
-    setUser(name)
+    setUser(name);
     setCookie("auth_token", newToken, {
       maxAge: 30 * 24 * 60 * 60, // Cookie expires in 30 days
     });
@@ -72,24 +72,29 @@ export const AuthProvider = ({ children }) => {
   const verifyToken = async () => {
     const token = getCookie("auth_token");
     try {
-      const response = await fetch(process.env.REST_API_URL + "/api/auth/verify", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        process.env.REST_API_URL + "/api/auth/verify",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.ok) {
         const result = await response.json();
-        console.log("AUTHORIZATION TOKEN VERIFICATION SUCCESFULL")
+        console.log("AUTHORIZATION TOKEN VERIFICATION SUCCESFULL");
         setUser(result.name);
         setIsLoggedIn(true);
       } else {
         setIsLoggedIn(false);
+        deleteCookie("auth_token");
       }
     } catch (error) {
       console.log("ERROR DURING TOKEN VERIFICATION", error);
       setIsLoggedIn(false);
+      deleteCookie("auth_token");
     }
   };
 
@@ -97,7 +102,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         token,
-        isLoggedIn, 
+        isLoggedIn,
         setIsLoggedIn,
         login,
         logout,

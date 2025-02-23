@@ -52,13 +52,6 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
     position: "absolute",
     zIndex: -1,
     inset: 0,
-    backgroundImage:
-      "radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 80%), hsl(0, 0%, 100%))",
-    backgroundRepeat: "no-repeat",
-    ...theme.applyStyles("dark", {
-      backgroundImage:
-        "radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))",
-    }),
   },
 }));
 
@@ -75,7 +68,6 @@ export default function SignIn(props) {
     setOpen(true);
   };
 
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (emailError || passwordError) {
@@ -84,12 +76,15 @@ export default function SignIn(props) {
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData.entries());
     try {
-      const response = await fetch(process.env.REST_API_URL + "/api/auth/login", {
-        method: 'POST',
-        mode: 'cors',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data),
-      });
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_ENDPOINT + "/api/auth/login",
+        {
+          method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        }
+      );
       const result = await response.json(); // Parse JSON response
       if (!response.ok) {
         alert("ERROR: " + result.message);
@@ -99,10 +94,10 @@ export default function SignIn(props) {
         const auth_token = result.token;
         console.log(auth_token);
         login(auth_token, result.name);
-        setIsLoggedIn(true)
-        setUser(result.name)
-        console.log("name:", result.name)
-        
+        setIsLoggedIn(true);
+        setUser(result.name);
+        console.log("name:", result.name);
+
         return;
       }
     } catch (error) {
@@ -138,98 +133,98 @@ export default function SignIn(props) {
   };
 
   React.useEffect(() => {
-    if (isLoggedIn){
-        router.push("/")
+    if (isLoggedIn) {
+      router.push("/");
     }
-  }, [isLoggedIn])
+  }, [isLoggedIn]);
 
   return (
-      <SignInContainer direction="column" justifyContent="space-between">
-        <Card variant="outlined">
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{ width: "100%", fontSize: "clamp(2rem, 10vw, 2.15rem)" }}
-          >
-            Kirjautuminen
-          </Typography>
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            noValidate
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              width: "100%",
-              gap: 2,
-            }}
-          >
-            <FormControl>
-              <FormLabel htmlFor="email">Sähköposti</FormLabel>
-              <TextField
-                error={emailError}
-                helperText={emailErrorMessage}
-                id="email"
-                type="email"
-                name="email"
-                placeholder="nimi.sukunimi@email.com"
-                autoComplete="email"
-                autoFocus
-                required
-                fullWidth
-                variant="outlined"
-                color={emailError ? "error" : "primary"}
-              />
-            </FormControl>
-            <FormControl>
-              <FormLabel htmlFor="password">Salasana</FormLabel>
-              <TextField
-                error={passwordError}
-                helperText={passwordErrorMessage}
-                name="password"
-                placeholder="•••••••••••"
-                type="password"
-                id="password"
-                autoComplete="current-password"
-                autoFocus
-                required
-                fullWidth
-                variant="outlined"
-                color={passwordError ? "error" : "primary"}
-              />
-            </FormControl>
-            <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Muista minut"
-            />
-            <Button
-              type="submit"
+    <SignInContainer direction="column" justifyContent="space-between">
+      <Card variant="outlined">
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ width: "100%", fontSize: "clamp(2rem, 10vw, 2.15rem)" }}
+        >
+          Kirjautuminen
+        </Typography>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          noValidate
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+            gap: 2,
+          }}
+        >
+          <FormControl>
+            <FormLabel htmlFor="email">Sähköposti</FormLabel>
+            <TextField
+              error={emailError}
+              helperText={emailErrorMessage}
+              id="email"
+              type="email"
+              name="email"
+              placeholder="nimi.sukunimi@email.com"
+              autoComplete="email"
+              autoFocus
+              required
               fullWidth
-              variant="contained"
-              onClick={validateInputs}
-            >
-              Kirjaudu
-            </Button>
-            <Link
-              component="button"
-              type="button"
-              onClick={handleClickOpen}
-              variant="body2"
-              sx={{ alignSelf: "center" }}
-            >
-              Unohditko salasanan?
+              variant="outlined"
+              color={emailError ? "error" : "primary"}
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel htmlFor="password">Salasana</FormLabel>
+            <TextField
+              error={passwordError}
+              helperText={passwordErrorMessage}
+              name="password"
+              placeholder="•••••••••••"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              autoFocus
+              required
+              fullWidth
+              variant="outlined"
+              color={passwordError ? "error" : "primary"}
+            />
+          </FormControl>
+          <FormControlLabel
+            control={<Checkbox value="remember" color="primary" />}
+            label="Muista minut"
+          />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            onClick={validateInputs}
+          >
+            Kirjaudu
+          </Button>
+          <Link
+            component="button"
+            type="button"
+            onClick={handleClickOpen}
+            variant="body2"
+            sx={{ alignSelf: "center" }}
+          >
+            Unohditko salasanan?
+          </Link>
+        </Box>
+        <Divider></Divider>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Typography sx={{ textAlign: "center" }}>
+            Eikö sinulla ole tiliä?{" "}
+            <Link href="/SignUp" variant="body2" sx={{ alignSelf: "center" }}>
+              Rekisteröidy
             </Link>
-          </Box>
-          <Divider></Divider>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Typography sx={{ textAlign: "center" }}>
-              Eikö sinulla ole tiliä?{" "}
-              <Link href="/SignUp" variant="body2" sx={{ alignSelf: "center" }}>
-                Rekisteröidy
-              </Link>
-            </Typography>
-          </Box>
-        </Card>
-      </SignInContainer>
+          </Typography>
+        </Box>
+      </Card>
+    </SignInContainer>
   );
 }

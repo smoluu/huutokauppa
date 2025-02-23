@@ -15,8 +15,9 @@ import {
   Box,
   TextField,
   Grid2,
-  Grid,
+  InputAdornment,
 } from "@mui/material";
+import HourglassTopIcon from "@mui/icons-material/HourglassTop";
 // components/Carousel.js
 import React, { useRef, useState } from "react";
 import PriceChart from "./priceChart";
@@ -25,7 +26,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import sendBid from "@/app/action/sendBid";
 import useAlert from "@/hooks/useAlert";
-import useSound from "use-sound";
+import { msToDHMS } from "@/helperFunctions/Time";
 
 export default function Product(props) {
   const product = props.product;
@@ -33,17 +34,33 @@ export default function Product(props) {
   const [currentBid, setCurrentBid] = useState(product.bid);
   const { isLoggedIn, token, user } = useAuth();
   const { setAlert } = useAlert();
-  const currentBidButton = useRef();
+  const currentPriceRef = useRef();
+  const newBidFieldRef = useRef();
+  const [bidButtonDisabled, setbidButtonDisabled] = useState(false);
+  const [expiryMS, setExpiryMS] = useState(
+    new Date(props.product.end).getTime() - Date.now()
+  );
+  const [expiryDateFormatted, setExpiryDateFormatted] = useState("");
   const router = useRouter();
-  const [newbidSoundPitch, setNewBidSoundPitch] = useState(0, 7);
-  const [newBidSound] = useSound("/newBid", {
-    playbackRate: newbidSoundPitch,
-    volume: 1,
-  });
+  const audioRef = useRef(null)
+
+
+  const playSound = () => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio("/sounds/newBid.mp3").play();
+    }
+    audioRef.current.play();
+  };
 
   const handleBid = async () => {
+    setbidButtonDisabled(true);
     if (isLoggedIn) {
-      const response = await sendBid(newBid, user, product._id, token);
+      const response = await sendBid(
+        newBidFieldRef.current.value,
+        user,
+        product._id,
+        token
+      );
       const result = await response.json();
       console.log(result.message);
       if (response.status == 200) {
@@ -52,9 +69,24 @@ export default function Product(props) {
         // error status
         setAlert(`Huuto epäonnistui: ${result.message}`, "error");
       }
+      setTimeout(() => {
+        setbidButtonDisabled(false);
+      }, 500);
     } else {
       router.push("/SignIn");
     }
+  };
+  const updateExpiry = () => {
+    setExpiryMS((prevExpiryMS) => {
+      const newExpiryMS = prevExpiryMS - 1000;
+      const TimeDHMS = msToDHMS(newExpiryMS);
+      const days = TimeDHMS.days > 0 ? `${TimeDHMS.days}:` : "";
+      const hours = TimeDHMS.hours > 0 ? `${TimeDHMS.hours}:` : "";
+      const minutes = TimeDHMS.minutes > 0 ? `${TimeDHMS.minutes}:` : "";
+      const timeFormatted = `${days}${hours}${minutes}${TimeDHMS.seconds}`;
+      setExpiryDateFormatted(newExpiryMS > 0 ? timeFormatted : "Päättynyt");
+      return newExpiryMS;
+    });
   };
 
   const bidHistory = [
@@ -63,6 +95,8 @@ export default function Product(props) {
     { bidder: "Sam Wilson", bidAmount: "2,300.00€", time: "2025-02-17 12:45" },
   ];
   useEffect(() => {
+    updateExpiry();
+    audioRef.current = new Audio("/sounds/newBid.mp3")
     // sse listener for price
     const price_eventSource = new EventSource(
       process.env.NEXT_PUBLIC_API_ENDPOINT +
@@ -73,8 +107,8 @@ export default function Product(props) {
       const data = JSON.parse(e.data);
       if (data.price) {
         setCurrentBid(data.price);
-        const button = currentBidButton.current;
-        newBidSound();
+        const button = currentPriceRef.current;
+        audioRef.current.play()
         //trigger price change animation on button
         button.style.transition = "transform 0.25s ease-in-out";
         button.style.transform = "scale(1.6)";
@@ -83,11 +117,14 @@ export default function Product(props) {
         }, 250);
       }
     };
-    //
+    var expiryInterval = setInterval(() => {
+      updateExpiry();
+    }, 1000);
     return () => {
       price_eventSource.close();
+      clearInterval(expiryInterval);
     };
-  });
+  }, []);
 
   return (
     <Box
@@ -154,27 +191,49 @@ export default function Product(props) {
           }}
           padding={5}
         >
-          <Grid2 size={6}>
-            <Button variant="outlined">{product.price}€</Button>
-            <Button variant="contained" sx={{ marginX: 2 }}>
-              Osta nyt
+          <Grid2 size={3} sx={{ display: "flex", justifyContent: "center" }}>
+            <Button variant="outlined" size="small">
+              {product.price}€
+            </Button>
+            <Button variant="contained" size="small" sx={{ marginX: 2 }}>
+              Osta
             </Button>
           </Grid2>
-          <Grid2 size={6}>
-            <Button ref={currentBidButton} variant="outlined">
+          <Grid2 size={9} sx={{ display: "flex", justifyContent: "center" }}>
+            <TextField
+              label="Päättyminen"
+              disabled
+              value={expiryDateFormatted}
+              sx={{ maxWidth: 150, marginX: 2 }}
+              size="small"
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <HourglassTopIcon />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <Button ref={currentPriceRef} variant="outlined">
               {currentBid}€
             </Button>
             <TextField
+              ref={newBidFieldRef}
               label="Uusi huuto"
-              value={newBid}
               type="number"
               onChange={(e) => {
-                setNewBid(e.target.value);
+                newBidFieldRef.current.value = e.target.value;
               }}
               sx={{ maxWidth: 150, marginX: 2 }}
               size="small"
             />
-            <Button variant="contained" onClick={handleBid}>
+            <Button
+              loading={bidButtonDisabled}
+              variant="contained"
+              onClick={handleBid}
+            >
               Huuda
             </Button>
           </Grid2>
@@ -191,7 +250,6 @@ export default function Product(props) {
           flexWrap: "wrap",
           justifyContent: "center",
           alignItems: "center",
-          
         }}
       >
         <Card

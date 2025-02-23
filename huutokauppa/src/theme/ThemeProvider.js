@@ -35,7 +35,7 @@ const theme = createTheme({
       styleOverrides: {
         body: {
           background:
-            "radial-gradient(at 50% 50%, hsla(210, 100%, 60%, 0.5), hsl(220, 30%, 5%))", // Adjust background here
+            "radial-gradient(at 50% 50%, hsla(30, 100%, 60%, 0.6), hsl(25, 90%, 15%))", // Adjust background here
           margin: 0,
           padding: 0,
           fontFamily: "'Georgia', serif", // Global font family for body
