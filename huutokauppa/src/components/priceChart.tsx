@@ -37,7 +37,7 @@ export default function PriceChart({ data }) {
             <Typography variant="h4" component="p">
               Hinta historia
             </Typography>
-            { /*<Chip size="small" color="success" label="Tänään 8%" /> */}
+            {/*<Chip size="small" color="success" label="Tänään 8%" /> */}
           </Stack>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
             Hinta viimeisen 10 huudon aikana
@@ -48,16 +48,16 @@ export default function PriceChart({ data }) {
           series={[
             {
               data: [
-                bids[9].bid,
-                bids[8].bid,
-                bids[7].bid,
-                bids[6].bid,
-                bids[5].bid,
-                bids[4].bid,
-                bids[3].bid,
-                bids[2].bid,
-                bids[1].bid,
-                bids[0].bid,
+                bids[9]?.bid || 0,
+                bids[8]?.bid || 0,
+                bids[7]?.bid || 0,
+                bids[6]?.bid || 0,
+                bids[5]?.bid || 0,
+                bids[4]?.bid || 0,
+                bids[3]?.bid || 0,
+                bids[2]?.bid || 0,
+                bids[1]?.bid || 0,
+                bids[0]?.bid || 0,
               ],
             },
           ]}

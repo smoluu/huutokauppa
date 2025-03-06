@@ -59,7 +59,10 @@ router.get("/", async (req, res) => {
         const bids = JSON.stringify(resultBids)
         product.bids = bids;
         //create new presigned urls for images and add to response
-        if (imageUrls) {
+        if (
+          imageUrls &&
+          new URLSearchParams(imageUrls[0]).get("X-Amz-Expires")
+        ) {
           for (let i = 0; i < imageUrls.length; i++) {
             //check expiry and generate new signedurl if expired
             const urlParams = new URLSearchParams(imageUrls[i]);

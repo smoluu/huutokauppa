@@ -158,7 +158,7 @@ export default function Product(props) {
       >
         <CardMedia
           component="img"
-          image={product.imageUrls[0]}
+          image={product.imageUrls.length > 0 ? product.imageUrls[0] : '/150x150.svg'}
           alt="Product image"
           sx={{ width: "50%", margin: "auto" }}
         />

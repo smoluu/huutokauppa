@@ -53,7 +53,7 @@ const ProductCard = ({ product, durationMS, timeFormatted}) => {
           <CardMedia
             component="img"
             height="150"
-            image={product.imageUrl}
+            image={product.imageUrls.length > 0 ? product.imageUrls[0] : '/150x150.svg'}
             alt="Product image"
             
           />
