@@ -42,3 +42,4 @@
 # typescript
 /huutokauppa/*.tsbuildinfo
 /huutokauppa/next-env.d.ts
+backend/.env

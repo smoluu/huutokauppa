@@ -1,5 +1,6 @@
 const express = require("express");
 const Product = require("../models/Product");
+const Bid = require("../models/Bid");
 const verifyToken = require("../verifyToken");
 const { mongoose } = require("mongoose");
 const multer = require("multer");
@@ -50,6 +51,13 @@ router.get("/", async (req, res) => {
         const product = response;
         const imageUrls = product.imageUrls;
         var hasUrlsChanged = false;
+        // add 10 latest bids to response
+        const resultBids = await Bid.find({ productId: req.query.productId })
+          .sort({ created: -1 })
+          .limit(10)
+          .lean();
+        const bids = JSON.stringify(resultBids)
+        product.bids = bids;
         //create new presigned urls for images and add to response
         if (imageUrls) {
           for (let i = 0; i < imageUrls.length; i++) {
@@ -57,7 +65,8 @@ router.get("/", async (req, res) => {
             const urlParams = new URLSearchParams(imageUrls[i]);
             const xAmzDate = urlParams.get("X-Amz-Date"); // creation date (ISO 8601 "basic")
             const xAmzExpires = urlParams.get("X-Amz-Expires"); // seconds from creation to expiry
-            const expiry = getEpochMsFromXAmzDate(xAmzDate) + (xAmzExpires * 1000);
+            const expiry =
+              getEpochMsFromXAmzDate(xAmzDate) + xAmzExpires * 1000;
             if (new Date().getTime() > expiry) {
               // get product image and add them to the response
               const bucketName = process.env.PRODUCT_BUCKET;
@@ -189,10 +198,12 @@ router.get("/price", (req, res) => {
 });
 // listen for price change
 // sse must start with "data:" and end in "\n\n"
-priceEmitter.on("product_new_price", (new_productId, price) => {
+priceEmitter.on("product_new_price", (new_productId, name, date,  newBid) => {
   const data = JSON.stringify({
     productId: new_productId,
-    price: price,
+    name: name,
+    created: date,
+    bid: newBid,
   });
   sse_clients.forEach((client_productId, res) => {
     if (client_productId == new_productId) {

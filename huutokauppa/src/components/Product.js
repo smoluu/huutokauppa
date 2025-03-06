@@ -37,13 +37,14 @@ export default function Product(props) {
   const currentPriceRef = useRef();
   const newBidFieldRef = useRef();
   const [bidButtonDisabled, setbidButtonDisabled] = useState(false);
-  const [expiryMS, setExpiryMS] = useState(
+  const expiryMS = useRef(
     new Date(props.product.end).getTime() - Date.now()
   );
   const [expiryDateFormatted, setExpiryDateFormatted] = useState("");
   const router = useRouter();
-  const audioRef = useRef(null)
-
+  const audioRef = useRef(null);
+  const [bidHistory, setBidHistory] = useState(JSON.parse(product.bids));
+  var prevExpiryTime = new Date(props.product.end).getTime() - Date.now();
 
   const playSound = () => {
     if (!audioRef.current) {
@@ -77,26 +78,21 @@ export default function Product(props) {
     }
   };
   const updateExpiry = () => {
-    setExpiryMS((prevExpiryMS) => {
-      const newExpiryMS = prevExpiryMS - 1000;
-      const TimeDHMS = msToDHMS(newExpiryMS);
+     expiryMS.current -= 1000;
+      const TimeDHMS = msToDHMS(expiryMS.current);
       const days = TimeDHMS.days > 0 ? `${TimeDHMS.days}:` : "";
       const hours = TimeDHMS.hours > 0 ? `${TimeDHMS.hours}:` : "";
       const minutes = TimeDHMS.minutes > 0 ? `${TimeDHMS.minutes}:` : "";
       const timeFormatted = `${days}${hours}${minutes}${TimeDHMS.seconds}`;
-      setExpiryDateFormatted(newExpiryMS > 0 ? timeFormatted : "Päättynyt");
-      return newExpiryMS;
-    });
+      setExpiryDateFormatted(
+        expiryMS.current > 0 ? timeFormatted : "Päättynyt"
+      );
   };
 
-  const bidHistory = [
-    { bidder: "John Doe", bidAmount: "2,400.00€", time: "2025-02-17 14:30" },
-    { bidder: "Jane Smith", bidAmount: "2,350.00€", time: "2025-02-17 13:50" },
-    { bidder: "Sam Wilson", bidAmount: "2,300.00€", time: "2025-02-17 12:45" },
-  ];
   useEffect(() => {
     updateExpiry();
-    audioRef.current = new Audio("/sounds/newBid.mp3")
+
+    audioRef.current = new Audio("/sounds/newBid.mp3");
     // sse listener for price
     const price_eventSource = new EventSource(
       process.env.NEXT_PUBLIC_API_ENDPOINT +
@@ -105,16 +101,25 @@ export default function Product(props) {
     );
     price_eventSource.onmessage = (e) => {
       const data = JSON.parse(e.data);
-      if (data.price) {
-        setCurrentBid(data.price);
+      if (data.bid) {
+        setCurrentBid(data.bid);
         const button = currentPriceRef.current;
-        audioRef.current.play()
-        //trigger price change animation on button
+        audioRef.current.play();
+        // trigger price change animation on button
         button.style.transition = "transform 0.25s ease-in-out";
         button.style.transform = "scale(1.6)";
         setTimeout(() => {
           button.style.transform = "scale(1)";
         }, 250);
+      }
+      if (data.bid) {
+        const newBid = {
+          name: data.name,
+          bid: data.bid,
+          created: data.created,
+        };
+        // add new bid to bid history
+        setBidHistory([newBid, ...bidHistory]);
       }
     };
     var expiryInterval = setInterval(() => {
@@ -124,7 +129,7 @@ export default function Product(props) {
       price_eventSource.close();
       clearInterval(expiryInterval);
     };
-  }, []);
+  }, [bidHistory,currentBid]);
 
   return (
     <Box
@@ -277,9 +282,19 @@ export default function Product(props) {
               Huuto historia
             </Typography>
 
-            <TableContainer>
+            <TableContainer
+              sx={{
+                maxHeight: 270, // Set a fixed height to trigger scrolling
+                overflowY: "auto", // Enable vertical scrolling
+                scrollbarWidth: "none", // Firefox: hide scrollbar
+                "&::-webkit-scrollbar": {
+                  // Webkit (Chrome, Safari): hide scrollbar
+                  display: "none",
+                }
+              }}
+            >
               <Table sx={{}} aria-label="bid history table">
-                <TableHead>
+                <TableHead sx={{ overflow: "scroll" }}>
                   <TableRow>
                     <TableCell>Nimi</TableCell>
                     <TableCell align="right">Hinta</TableCell>
@@ -290,10 +305,17 @@ export default function Product(props) {
                   {bidHistory.map((row, index) => (
                     <TableRow key={index}>
                       <TableCell component="th" scope="row">
-                        {row.bidder}
+                        {row.name}
                       </TableCell>
-                      <TableCell align="right">{row.bidAmount}</TableCell>
-                      <TableCell align="right">{row.time}</TableCell>
+                      <TableCell align="right">{row.bid}€</TableCell>
+                      <TableCell align="right">
+                        {new Date(row.created).toLocaleString("fi-FI", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          hour12: false,
+                        })}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -301,7 +323,7 @@ export default function Product(props) {
             </TableContainer>
           </CardContent>
         </Card>
-        <PriceChart></PriceChart>
+        <PriceChart data={bidHistory}></PriceChart>
       </Box>
     </Box>
   );

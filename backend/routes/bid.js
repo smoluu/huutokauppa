@@ -9,7 +9,6 @@ const priceEmitter = require('../emitters/priceEmitter');
 router.put("/", verifyToken, async (req, res) => {
   try {
     const newBid = req.body.bid;
-    const ownerId = req.body.ownerId;
     const productId = req.body.productId;
     const name = req.body.name;
     const userId = req.user.userId;
@@ -19,13 +18,14 @@ router.put("/", verifyToken, async (req, res) => {
     const product = await Product.findById(productId).lean();
     if (newBid > product.bid) {
       const bid = new Bid({
+        productId: productId,
         name: name,
         ownerId: userId,
         bid: newBid,
       });
       bid.save();
       await Product.updateOne({_id: productId}, {bid: newBid})
-      const emit = priceEmitter.emit('product_new_price',productId, newBid)
+      const emit = priceEmitter.emit('product_new_price', product._id, name, new Date(), newBid, )
       console.log(`NEW BID: "${productId}" at ${newBid}€ from "${name}" ${emit} `)
       return res.status(200).json({ message: "Huuto onnistui" });
     } else {
